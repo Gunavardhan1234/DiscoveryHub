@@ -1,0 +1,28 @@
+server.port: 8084
+spring:
+  application.name: case-service
+  profiles.active: ${SPRING_PROFILES_ACTIVE:local}
+  jpa.hibernate.ddl-auto: none
+  flyway.enabled: true
+  kafka:
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      properties:
+        spring.json.add.type.headers: false
+management.endpoints.web.exposure.include: health,info
+discoveryhub.kafka.replication-factor: ${KAFKA_REPLICATION_FACTOR:1}
+---
+spring.config.activate.on-profile: local
+spring.datasource.url: ${CASE_DB_URL:jdbc:postgresql://localhost:5432/discoveryhub_case}
+spring.datasource.username: ${CASE_DB_USER:case_svc}
+spring.datasource.password: ${CASE_DB_PASSWORD:case_svc}
+spring.kafka.bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+discoveryhub.case.hold-base-url: ${HOLD_BASE_URL:http://localhost:8087}
+---
+spring.config.activate.on-profile: docker
+spring.datasource.url: ${CASE_DB_URL:jdbc:postgresql://postgres:5432/discoveryhub_case}
+spring.datasource.username: ${CASE_DB_USER:case_svc}
+spring.datasource.password: ${CASE_DB_PASSWORD:case_svc}
+spring.kafka.bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:kafka:9092}
+discoveryhub.case.hold-base-url: ${HOLD_BASE_URL:http://hold-service:8087}

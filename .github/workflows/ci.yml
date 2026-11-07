@@ -1,0 +1,41 @@
+name: discoveryhub-ci
+on:
+  push:
+  pull_request:
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+      - run: mvn -T1C verify
+      - run: docker compose config
+      - run: docker build -f services/ingest-service/Dockerfile .
+      - run: docker build -f services/archive-service/Dockerfile .
+      - run: docker build -f services/search-service/Dockerfile .
+      - run: docker build -f services/case-service/Dockerfile .
+      - run: docker build -f services/export-service/Dockerfile .
+      - run: docker build -f services/audit-service/Dockerfile .
+      - run: docker build -f services/hold-service/Dockerfile .
+      - run: docker build -f services/api-gateway/Dockerfile .
+      - run: docker build web
+      # Dependency/security scan (execution-plan InfoSec row: "dependency
+      # scan in CI"). Scans the resolved Maven + npm dependency trees for
+      # known CVEs; report-only (exit-code 0) so a newly-disclosed CVE in a
+      # transitive dependency doesn't block the whole team. Prints a table to
+      # the job log rather than uploading SARIF to the Security tab, since
+      # that requires GitHub Advanced Security (security-events: write),
+      # which isn't available on every plan/repo.
+      - name: Dependency vulnerability scan (Trivy)
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          scanners: vuln
+          format: table
+          exit-code: '0'
+          severity: CRITICAL,HIGH

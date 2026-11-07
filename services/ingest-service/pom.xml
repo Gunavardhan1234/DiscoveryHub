@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>com.smarsh.discoveryhub</groupId><artifactId>discoveryhub-parent</artifactId>
+        <version>0.1.0-SNAPSHOT</version><relativePath>../../pom.xml</relativePath>
+    </parent>
+    <artifactId>ingest-service</artifactId>
+
+    <properties>
+        <spring-cloud-aws.version>3.3.1</spring-cloud-aws.version>
+    </properties>
+
+    <dependencies>
+        <dependency><groupId>com.smarsh.discoveryhub</groupId><artifactId>discoveryhub-common</artifactId><version>${project.version}</version></dependency>
+        <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-web</artifactId></dependency>
+        <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-validation</artifactId></dependency>
+        <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-actuator</artifactId></dependency>
+        <dependency><groupId>org.springframework.kafka</groupId><artifactId>spring-kafka</artifactId></dependency>
+        <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-jdbc</artifactId></dependency>
+        <dependency><groupId>org.flywaydb</groupId><artifactId>flyway-core</artifactId></dependency>
+        <dependency><groupId>org.flywaydb</groupId><artifactId>flyway-database-postgresql</artifactId></dependency>
+        <dependency><groupId>org.postgresql</groupId><artifactId>postgresql</artifactId><scope>runtime</scope></dependency>
+        <!-- Claim-check: large attachments are externalized to S3 at ingest time so
+             only an s3Key + sha256 reference travels in the comm.ingest.v1 event. -->
+        <dependency><groupId>io.awspring.cloud</groupId><artifactId>spring-cloud-aws-starter-s3</artifactId><version>${spring-cloud-aws.version}</version></dependency>
+        <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-test</artifactId><scope>test</scope></dependency>
+        <dependency><groupId>com.smarsh.discoveryhub</groupId><artifactId>discoveryhub-testsupport</artifactId><version>${project.version}</version><scope>test</scope></dependency>
+    </dependencies>
+    <build><plugins><plugin><groupId>org.springframework.boot</groupId><artifactId>spring-boot-maven-plugin</artifactId></plugin></plugins></build>
+</project>

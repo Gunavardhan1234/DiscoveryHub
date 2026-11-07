@@ -1,0 +1,44 @@
+server.port: 8082
+spring:
+  application.name: archive-service
+  profiles.active: ${SPRING_PROFILES_ACTIVE:local}
+
+management.endpoints.web.exposure.include: health,info,metrics,prometheus
+management.metrics.tags.application: ${spring.application.name}
+
+flyway.enabled: true
+
+discoveryhub.kafka.replication-factor: ${KAFKA_REPLICATION_FACTOR:1}
+spring.kafka.producer:
+  key-serializer: org.apache.kafka.common.serialization.StringSerializer
+  value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+  properties:
+    spring.json.add.type.headers: false
+spring.kafka.consumer:
+  group-id: archive-ingest
+  key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+  value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+  auto-offset-reset: earliest
+  enable-auto-commit: false
+spring.kafka.listener.ack-mode: record
+
+# BlobStore/S3 for disposition attachment cleanup (FR-5, execution-plan Day 3
+# M4). Region/credentials/bucket/endpoint come from the environment — real AWS
+# S3 in every profile, no LocalStack.
+spring.cloud.aws:
+  region.static: ${AWS_REGION:us-east-1}
+  credentials:
+    access-key: ${AWS_ACCESS_KEY_ID:test}
+    secret-key: ${AWS_SECRET_ACCESS_KEY:test}
+  s3:
+    endpoint: ${S3_ENDPOINT:}
+    path-style-access-enabled: ${S3_PATH_STYLE_ACCESS:false}
+discoveryhub.archive.attachments-bucket: ${ATTACHMENT_BUCKET:discoveryhub-attachments}
+---
+spring.config.activate.on-profile: local
+spring.data.mongodb.uri: ${MONGODB_URI:mongodb://archive_svc:archive_svc@localhost:27017/discoveryhub_archive?authSource=discoveryhub_archive}
+spring.kafka.bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+---
+spring.config.activate.on-profile: docker
+spring.data.mongodb.uri: ${MONGODB_URI:mongodb://archive_svc:archive_svc@mongo:27017/discoveryhub_archive?authSource=discoveryhub_archive}
+spring.kafka.bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:kafka:9092}

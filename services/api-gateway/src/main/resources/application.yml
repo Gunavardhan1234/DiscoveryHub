@@ -1,0 +1,123 @@
+server.port: 8080
+spring:
+  application.name: api-gateway
+  profiles.active: ${SPRING_PROFILES_ACTIVE:local}
+  cloud.gateway:
+    routes:
+      - id: ingest
+        uri: ${INGEST_URI:http://localhost:8081}
+        predicates:
+          - Path=/api/messages/**
+          - Method=POST
+        filters:
+          - name: CircuitBreaker
+            args: {name: ingestCB, fallbackUri: forward:/fallback}
+      - id: ingest-admin
+        uri: ${INGEST_URI:http://localhost:8081}
+        predicates:
+          - Path=/api/admin/generate
+          - Method=POST
+        filters:
+          - name: CircuitBreaker
+            args: {name: ingestCB, fallbackUri: forward:/fallback}
+      - id: archive
+        uri: ${ARCHIVE_URI:http://localhost:8082}
+        predicates:
+          - Path=/api/messages/**
+          - Method=GET,DELETE
+        filters:
+          - name: CircuitBreaker
+            args: {name: archiveCB, fallbackUri: forward:/fallback}
+      - id: archive-admin
+        uri: ${ARCHIVE_URI:http://localhost:8082}
+        predicates:
+          - Path=/admin/**
+          - Method=POST
+        filters:
+          - name: CircuitBreaker
+            args: {name: archiveCB, fallbackUri: forward:/fallback}
+      - id: search
+        uri: ${SEARCH_URI:http://localhost:8083}
+        predicates:
+          - Path=/api/search/**,/api/dashboard/**
+        filters:
+          - name: CircuitBreaker
+            args: {name: searchCB, fallbackUri: forward:/fallback}
+      - id: cases
+        uri: ${CASE_URI:http://localhost:8084}
+        predicates:
+          - Path=/api/cases/**,/api/retention-policy/**
+        filters:
+          - name: CircuitBreaker
+            args: {name: caseCB, fallbackUri: forward:/fallback}
+      - id: holds
+        uri: ${HOLD_URI:http://localhost:8087}
+        predicates:
+          - Path=/api/holds/**
+        filters:
+          - name: CircuitBreaker
+            args: {name: holdCB, fallbackUri: forward:/fallback}
+      - id: exports
+        uri: ${EXPORT_URI:http://localhost:8085}
+        predicates:
+          - Path=/api/exports/**
+        filters:
+          - name: CircuitBreaker
+            args: {name: exportCB, fallbackUri: forward:/fallback}
+      - id: audit
+        uri: ${AUDIT_URI:http://localhost:8086}
+        predicates:
+          - Path=/api/audit/**
+        filters:
+          - name: CircuitBreaker
+            args: {name: auditCB, fallbackUri: forward:/fallback}
+management.endpoints.web.exposure.include: health,info
+# Per-route circuit breakers (execution-plan Day 4: "Resilience4j circuit
+# breaker + bounded bulkhead in gateway/export"). Each route gets its own
+# named breaker so one downed service (e.g. archive-service) can't trip the
+# breaker for unrelated routes. A bulkhead caps concurrent in-flight calls per
+# route (BulkheadGatewayFilterFactory, registered by BulkheadRouteConfig) so a
+# slow/stuck downstream can't exhaust the gateway's own thread pool either.
+resilience4j:
+  circuitbreaker:
+    configs:
+      default:
+        sliding-window-size: 10
+        minimum-number-of-calls: 5
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 15s
+        permitted-number-of-calls-in-half-open-state: 3
+        automatic-transition-from-open-to-half-open-enabled: true
+    instances:
+      ingestCB: {base-config: default}
+      archiveCB: {base-config: default}
+      searchCB: {base-config: default}
+      caseCB: {base-config: default}
+      holdCB: {base-config: default}
+      exportCB: {base-config: default}
+      auditCB: {base-config: default}
+  timelimiter:
+    configs:
+      default:
+        timeout-duration: 10s
+    instances:
+      ingestCB: {base-config: default}
+      archiveCB: {base-config: default}
+      searchCB: {base-config: default}
+      caseCB: {base-config: default}
+      holdCB: {base-config: default}
+      exportCB: {base-config: default}
+      auditCB: {base-config: default}
+  bulkhead:
+    configs:
+      default:
+        max-concurrent-calls: 20
+        max-wait-duration: 0
+    instances:
+      ingestCB: {base-config: default}
+      archiveCB: {base-config: default}
+      searchCB: {base-config: default}
+      caseCB: {base-config: default}
+      holdCB: {base-config: default}
+      exportCB: {base-config: default}
+      auditCB: {base-config: default}

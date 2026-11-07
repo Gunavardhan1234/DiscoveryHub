@@ -1,0 +1,44 @@
+server.port: 8087
+spring:
+  application.name: hold-service
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:local}
+  jpa.hibernate.ddl-auto: validate
+  jpa.open-in-view: false
+  flyway.enabled: true
+  kafka:
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      properties:
+        spring.json.add.type.headers: false
+    consumer:
+      group-id: ${spring.application.name}
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      auto-offset-reset: earliest
+      enable-auto-commit: false
+    listener.ack-mode: record
+management.endpoints.web.exposure.include: health,info
+discoveryhub.kafka.replication-factor: ${KAFKA_REPLICATION_FACTOR:1}
+discoveryhub.hold.outbox.poll-interval-ms: ${HOLD_OUTBOX_POLL_INTERVAL_MS:2000}
+discoveryhub.hold.outbox.batch-size: ${HOLD_OUTBOX_BATCH_SIZE:100}
+discoveryhub.disposition.scheduled-enabled: ${DISPOSITION_SCHEDULED_ENABLED:true}
+discoveryhub.disposition.fixed-delay-ms: ${DISPOSITION_FIXED_DELAY_MS:120000}
+discoveryhub.disposition.initial-delay-ms: ${DISPOSITION_INITIAL_DELAY_MS:60000}
+---
+spring.config.activate.on-profile: local
+spring.datasource.url: ${HOLD_DB_URL:jdbc:postgresql://localhost:5432/discoveryhub_hold}
+spring.datasource.username: ${HOLD_DB_USER:hold_svc}
+spring.datasource.password: ${HOLD_DB_PASSWORD:hold_svc}
+spring.kafka.bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+discoveryhub.archive.base-url: ${ARCHIVE_URI:http://localhost:8082}
+discoveryhub.case.base-url: ${CASE_BASE_URL:http://localhost:8084}
+---
+spring.config.activate.on-profile: docker
+spring.datasource.url: ${HOLD_DB_URL:jdbc:postgresql://postgres:5432/discoveryhub_hold}
+spring.datasource.username: ${HOLD_DB_USER:hold_svc}
+spring.datasource.password: ${HOLD_DB_PASSWORD:hold_svc}
+spring.kafka.bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:kafka:9092}
+discoveryhub.archive.base-url: ${ARCHIVE_URI:http://archive-service:8082}
+discoveryhub.case.base-url: ${CASE_BASE_URL:http://case-service:8084}

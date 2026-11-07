@@ -1,0 +1,74 @@
+server.port: 8085
+spring:
+  application.name: export-service
+  profiles.active: ${SPRING_PROFILES_ACTIVE:local}
+  jpa.hibernate.ddl-auto: validate
+  flyway.enabled: true
+  kafka:
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+    consumer:
+      group-id: export-worker
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      auto-offset-reset: earliest
+      enable-auto-commit: false
+    listener.ack-mode: record
+  cloud.aws:
+    region.static: ${AWS_REGION:us-east-1}
+    credentials:
+      access-key: ${AWS_ACCESS_KEY_ID:test}
+      secret-key: ${AWS_SECRET_ACCESS_KEY:test}
+    s3:
+      endpoint: ${S3_ENDPOINT:}
+      path-style-access-enabled: ${S3_PATH_STYLE_ACCESS:false}
+management.endpoints.web.exposure.include: health,info
+discoveryhub:
+  kafka.replication-factor: ${KAFKA_REPLICATION_FACTOR:1}
+  export.attachments-bucket: ${EXPORT_ATTACHMENTS_BUCKET:discoveryhub-attachments}
+  export.exports-bucket: ${EXPORT_EXPORTS_BUCKET:discoveryhub-exports}
+  export.download-ttl-seconds: ${EXPORT_DOWNLOAD_TTL_SECONDS:900}
+  export.case-base-url: ${CASE_BASE_URL:http://localhost:8084}
+  export.archive-base-url: ${ARCHIVE_BASE_URL:http://localhost:8082}
+  export.search-base-url: ${SEARCH_BASE_URL:http://localhost:8083}
+  export.hold-base-url: ${HOLD_BASE_URL:http://localhost:8087}
+resilience4j:
+  circuitbreaker:
+    configs:
+      default:
+        sliding-window-size: 10
+        minimum-number-of-calls: 5
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 15s
+        permitted-number-of-calls-in-half-open-state: 3
+        automatic-transition-from-open-to-half-open-enabled: true
+    instances:
+      archiveClient: {base-config: default}
+      caseClient: {base-config: default}
+      searchClient: {base-config: default}
+  bulkhead:
+    configs:
+      default:
+        max-concurrent-calls: 10
+        max-wait-duration: 0
+    instances:
+      archiveClient: {base-config: default}
+      caseClient: {base-config: default}
+      searchClient: {base-config: default}
+---
+spring.config.activate.on-profile: local
+spring.datasource.url: ${EXPORT_DB_URL:jdbc:postgresql://localhost:5432/discoveryhub_export}
+spring.datasource.username: ${EXPORT_DB_USER:export_svc}
+spring.datasource.password: ${EXPORT_DB_PASSWORD:export_svc}
+spring.kafka.bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9094}
+---
+spring.config.activate.on-profile: docker
+spring.datasource.url: ${EXPORT_DB_URL:jdbc:postgresql://postgres:5432/discoveryhub_export}
+spring.datasource.username: ${EXPORT_DB_USER:export_svc}
+spring.datasource.password: ${EXPORT_DB_PASSWORD:export_svc}
+spring.kafka.bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:kafka:9092}
+discoveryhub.export.case-base-url: ${CASE_BASE_URL:http://case-service:8084}
+discoveryhub.export.archive-base-url: ${ARCHIVE_BASE_URL:http://archive-service:8082}
+discoveryhub.export.search-base-url: ${SEARCH_BASE_URL:http://search-service:8083}
+discoveryhub.export.hold-base-url: ${HOLD_BASE_URL:http://hold-service:8087}

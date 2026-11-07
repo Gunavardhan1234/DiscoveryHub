@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0">
+    <modelVersion>4.0.0</modelVersion>
+    <parent><groupId>com.smarsh.discoveryhub</groupId><artifactId>discoveryhub-parent</artifactId><version>0.1.0-SNAPSHOT</version><relativePath>../../pom.xml</relativePath></parent>
+    <artifactId>archive-service</artifactId>
+    <properties>
+        <spring-cloud-aws.version>3.3.1</spring-cloud-aws.version>
+    </properties>
+    <dependencies>
+        <dependency><groupId>com.smarsh.discoveryhub</groupId><artifactId>discoveryhub-common</artifactId><version>${project.version}</version></dependency>
+        <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-web</artifactId></dependency>
+        <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-actuator</artifactId></dependency>
+        <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-data-mongodb</artifactId></dependency>
+        <dependency><groupId>org.springframework.kafka</groupId><artifactId>spring-kafka</artifactId></dependency>
+        <dependency><groupId>io.micrometer</groupId><artifactId>micrometer-registry-prometheus</artifactId><scope>runtime</scope></dependency>
+        <!-- BlobStore adapter for disposition attachment cleanup (FR-5, execution-plan
+             Day 3 M4) — same starter/version M1 and M5 already use in ingest-service
+             and export-service. -->
+        <dependency><groupId>io.awspring.cloud</groupId><artifactId>spring-cloud-aws-starter-s3</artifactId><version>${spring-cloud-aws.version}</version></dependency>
+        <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-test</artifactId><scope>test</scope></dependency>
+        <dependency><groupId>com.smarsh.discoveryhub</groupId><artifactId>discoveryhub-testsupport</artifactId><version>${project.version}</version><scope>test</scope></dependency>
+        <dependency><groupId>org.testcontainers</groupId><artifactId>mongodb</artifactId><scope>test</scope></dependency>
+        <dependency><groupId>org.testcontainers</groupId><artifactId>junit-jupiter</artifactId><scope>test</scope></dependency>
+        <dependency><groupId>org.awaitility</groupId><artifactId>awaitility</artifactId><scope>test</scope></dependency>
+    </dependencies>
+    <build><plugins><plugin><groupId>org.springframework.boot</groupId><artifactId>spring-boot-maven-plugin</artifactId></plugin></plugins></build>
+</project>

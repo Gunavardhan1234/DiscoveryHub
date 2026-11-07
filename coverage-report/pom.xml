@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>com.smarsh.discoveryhub</groupId>
+        <artifactId>discoveryhub-parent</artifactId>
+        <version>0.1.0-SNAPSHOT</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+    <artifactId>coverage-report</artifactId>
+    <packaging>pom</packaging>
+
+    <!--
+      Real reactor dependencies on every module whose coverage we aggregate.
+
+      Without these, this module had no Maven-level edge to the modules it
+      reports on — only the jacoco.exec filesystem glob below — so under
+      `mvn -T1C verify` the multi-threaded builder was free to schedule this
+      module's own (trivial, source-less) build before other modules had
+      finished running their tests, and jacoco:report-aggregate would run
+      against jacoco.exec files that did not exist yet, producing an empty
+      report silently (no build failure). Declaring these as dependencies
+      forces the reactor to build every one of them through the `verify`
+      phase first, with or without -T1C, exactly the ordering
+      jacoco:report-aggregate assumes. Matches JaCoCo's own documented
+      report-aggregate pattern (a dependency-only aggregator module).
+
+      Do NOT also add an explicit <dataFileIncludes> glob alongside these
+      dependencies (an earlier version of this file had one, left over from
+      before this module had real dependencies to discover exec data from).
+      With real <dependencies> present, jacoco:report-aggregate's default
+      per-dependency class+exec pairing is what correctly attributes
+      coverage; adding the glob on top counted the right classes (bundle
+      sizes looked correct) but every class came back as 0% covered, because
+      the glob-discovered execution data was no longer being correlated
+      per-module the way the default dependency-based discovery does it.
+      Confirmed by removing it: RetentionGuard went from 0/19 to 19/19 lines
+      with no other change.
+    -->
+    <dependencies>
+        <dependency><groupId>com.smarsh.discoveryhub</groupId><artifactId>discoveryhub-common</artifactId><version>${project.version}</version></dependency>
+        <dependency><groupId>com.smarsh.discoveryhub</groupId><artifactId>discoveryhub-testsupport</artifactId><version>${project.version}</version></dependency>
+        <dependency><groupId>com.smarsh.discoveryhub</groupId><artifactId>ingest-service</artifactId><version>${project.version}</version></dependency>
+        <dependency><groupId>com.smarsh.discoveryhub</groupId><artifactId>archive-service</artifactId><version>${project.version}</version></dependency>
+        <dependency><groupId>com.smarsh.discoveryhub</groupId><artifactId>search-service</artifactId><version>${project.version}</version></dependency>
+        <dependency><groupId>com.smarsh.discoveryhub</groupId><artifactId>case-service</artifactId><version>${project.version}</version></dependency>
+        <dependency><groupId>com.smarsh.discoveryhub</groupId><artifactId>hold-service</artifactId><version>${project.version}</version></dependency>
+        <dependency><groupId>com.smarsh.discoveryhub</groupId><artifactId>export-service</artifactId><version>${project.version}</version></dependency>
+        <dependency><groupId>com.smarsh.discoveryhub</groupId><artifactId>audit-service</artifactId><version>${project.version}</version></dependency>
+        <dependency><groupId>com.smarsh.discoveryhub</groupId><artifactId>api-gateway</artifactId><version>${project.version}</version></dependency>
+        <dependency><groupId>com.smarsh.discoveryhub</groupId><artifactId>corpus-generator</artifactId><version>${project.version}</version></dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>aggregate-report</id>
+                        <phase>verify</phase>
+                        <goals><goal>report-aggregate</goal></goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>

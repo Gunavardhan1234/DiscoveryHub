@@ -1,0 +1,40 @@
+server.port: 8081
+spring:
+  application.name: ingest-service
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:local}
+  flyway.enabled: true
+management.endpoints.web.exposure.include: health,info
+discoveryhub.kafka.replication-factor: ${KAFKA_REPLICATION_FACTOR:1}
+# Claim-check: large attachments are externalized to S3 at ingest time.
+discoveryhub.ingest:
+  source-system: ${INGEST_SOURCE_SYSTEM:discoveryhub}
+  attachment-bucket: ${ATTACHMENT_BUCKET:discoveryhub-attachments}
+  claim-check.threshold-bytes: ${CLAIM_CHECK_THRESHOLD_BYTES:262144}
+spring.kafka.producer:
+  key-serializer: org.apache.kafka.common.serialization.StringSerializer
+  value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+  properties:
+    spring.json.add.type.headers: false
+spring.cloud.aws:
+  region.static: ${AWS_REGION:us-east-1}
+  credentials:
+    access-key: ${AWS_ACCESS_KEY_ID:test}
+    secret-key: ${AWS_SECRET_ACCESS_KEY:test}
+  s3:
+    endpoint: ${S3_ENDPOINT:}
+    path-style-access-enabled: ${S3_PATH_STYLE_ACCESS:false}
+---
+spring.config.activate.on-profile: local
+spring.datasource.url: ${INGEST_DB_URL:jdbc:postgresql://localhost:5433/discoveryhub_ingest}
+spring.datasource.username: ${INGEST_DB_USER:ingest_svc}
+spring.datasource.password: ${INGEST_DB_PASSWORD:ingest_svc}
+spring.flyway.enabled: true
+spring.kafka.bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+---
+spring.config.activate.on-profile: docker
+spring.datasource.url: ${INGEST_DB_URL:jdbc:postgresql://postgres:5432/discoveryhub_ingest}
+spring.datasource.username: ${INGEST_DB_USER:ingest_svc}
+spring.datasource.password: ${INGEST_DB_PASSWORD:ingest_svc}
+spring.flyway.enabled: true
+spring.kafka.bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:kafka:9092}

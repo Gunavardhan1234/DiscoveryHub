@@ -1,0 +1,13 @@
+target/
+node_modules/
+.idea/
+*.iml
+.env
+*.log
+coverage/
+
+# macOS Finder metadata
+.DS_Store
+**/.DS_Store
+web/.angular/
+web/dist/

@@ -1,0 +1,23 @@
+server.port: 8086
+spring:
+  application.name: audit-service
+  profiles.active: ${SPRING_PROFILES_ACTIVE:local}
+  kafka:
+    consumer:
+      group-id: audit-sink
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      auto-offset-reset: earliest
+      enable-auto-commit: false
+    listener:
+      ack-mode: record
+management.endpoints.web.exposure.include: health,info
+discoveryhub.kafka.replication-factor: ${KAFKA_REPLICATION_FACTOR:1}
+---
+spring.config.activate.on-profile: local
+spring.data.mongodb.uri: ${MONGODB_URI:mongodb://audit_svc:audit_svc@localhost:27017/discoveryhub_audit?authSource=discoveryhub_audit}
+spring.kafka.bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9094}
+---
+spring.config.activate.on-profile: docker
+spring.data.mongodb.uri: ${MONGODB_URI:mongodb://audit_svc:audit_svc@mongo:27017/discoveryhub_audit?authSource=discoveryhub_audit}
+spring.kafka.bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:kafka:9092}
